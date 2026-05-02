@@ -15,7 +15,7 @@ from backend.database import (
     set_setting,
 )
 from backend.services.balance_service import adjust_paper_usdt, get_balance
-from backend.services.exchange_service import fetch_open_orders, place_market_order
+from backend.services.exchange_service import fetch_open_orders, fetch_open_positions, place_market_order
 from backend.services.market_service import latest_price
 from backend.services.strategy_service import MIN_CONFIDENCE, evaluate_market, scan_market
 
@@ -202,7 +202,8 @@ def get_open_trade(mode: Optional[str] = None) -> Optional[dict]:
 
 def todays_closed_trades(mode: Optional[str] = None) -> list[dict]:
     normalized_mode = normalize_mode(mode)
-    start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    reset_at = get_setting("daily_loss_reset_at") or ""
+    start = reset_at if reset_at else datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
     with DB_LOCK, get_connection() as conn:
         rows = conn.execute(
             "SELECT * FROM trades WHERE mode = ? AND opened_at >= ? AND status = 'closed' ORDER BY opened_at DESC",
@@ -214,6 +215,9 @@ def todays_closed_trades(mode: Optional[str] = None) -> list[dict]:
 def check_exchange_open_positions(mode: Optional[str] = None) -> list[dict]:
     normalized_mode = normalize_mode(mode)
     if normalized_mode == "LIVE":
+        positions = fetch_open_positions()
+        if positions.get("success") and positions.get("positions"):
+            return [{"mode": "LIVE", "symbol": item.get("product_symbol"), "status": "open", "exchange_position": item} for item in positions["positions"]]
         orders = fetch_open_orders()
         if orders.get("success") and orders.get("orders"):
             return [{"mode": "LIVE", "symbol": item.get("symbol"), "status": item.get("status"), "exchange_order": item} for item in orders["orders"]]
@@ -254,8 +258,15 @@ def risk_check(decision: Optional[dict] = None, mode: Optional[str] = None) -> O
             if datetime.now(timezone.utc) - last_time < timedelta(minutes=10):
                 return "Cooldown is active after the last trade."
 
+    daily_loss_enabled = (get_setting("daily_loss_enabled") or "true").lower() == "true"
     daily_pnl = sum(float(trade["pnl"] or 0) for trade in trades)
-    if daily_pnl <= -(get_balance(normalized_mode)["usdt_equivalent"] * 0.02):
+    daily_loss = abs(min(daily_pnl, 0))
+    try:
+        limit_pct = float(get_setting("daily_loss_limit_pct") or 2)
+    except ValueError:
+        limit_pct = 2
+    daily_loss_limit = get_balance(normalized_mode)["usdt_equivalent"] * (limit_pct / 100)
+    if daily_loss_enabled and daily_loss >= daily_loss_limit > 0:
         return "Daily loss stop reached."
 
     previous = last_trade(normalized_mode)
@@ -293,12 +304,15 @@ def open_trade_from_decision(decision: dict, mode: Optional[str] = None) -> Opti
     timestamp = now_iso()
 
     if normalized_mode == "LIVE":
-        live_order = place_market_order(decision["coin"], side, allocated)
+        print("Executing trade")
+        live_order = place_market_order(decision["coin"], side, allocated, price)
         if not live_order.get("success"):
             log_event(f"LIVE order failed for {decision['coin']}: {live_order.get('error')}", "error", mode=normalized_mode)
             print("LIVE order failed:", live_order.get("error"))
             return None
         log_event(f"LIVE exchange order accepted: {live_order.get('order')}", mode=normalized_mode)
+    else:
+        print("Executing trade")
 
     with DB_LOCK, get_connection() as conn:
         cursor = conn.execute(

@@ -119,6 +119,12 @@ def init_db() -> None:
             set_setting("live_inr_balance", os.getenv("LIVE_INR_BALANCE", "0"))
         if get_setting("live_usdt_balance") is None:
             set_setting("live_usdt_balance", os.getenv("LIVE_USDT_BALANCE", "0"))
+        if get_setting("daily_loss_enabled") is None:
+            set_setting("daily_loss_enabled", "true")
+        if get_setting("daily_loss_limit_pct") is None:
+            set_setting("daily_loss_limit_pct", "2")
+        if get_setting("daily_loss_reset_at") is None:
+            set_setting("daily_loss_reset_at", "")
         _seed_balance_row(
             conn,
             "PAPER",

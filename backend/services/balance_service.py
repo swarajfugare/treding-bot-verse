@@ -44,6 +44,7 @@ def get_balance(mode: Optional[str] = None) -> dict:
         stored = _stored_balance("PAPER")
         usdt_balance = float(stored["usdt_balance"])
         inr_balance = float(stored["inr_balance"])
+        starting_balance = 10000.0
         source = "paper_wallet"
         positions = []
         error = None
@@ -64,13 +65,14 @@ def get_balance(mode: Optional[str] = None) -> dict:
             }
         usdt_balance = float(live["usdt_balance"])
         inr_balance = float(live["inr_balance"])
+        starting_balance = usdt_balance
         source = "exchange"
         positions = live["positions"]
         error = None
         _update_stored_balance("LIVE", usdt_balance, inr_balance)
 
     converted_usdt = round(inr_balance / rate, 2) if inr_balance else 0.0
-    total_equity = round(usdt_balance + converted_usdt, 2)
+    total_equity = round(usdt_balance if normalized_mode == "LIVE" else usdt_balance + converted_usdt, 2)
     return {
         "mode": normalized_mode,
         "inr_balance": round(inr_balance, 2),
@@ -78,6 +80,7 @@ def get_balance(mode: Optional[str] = None) -> dict:
         "usdt_balance": round(usdt_balance, 2),
         "usdt_equivalent": total_equity,
         "total_equity": total_equity,
+        "starting_balance": round(starting_balance, 2),
         "positions": positions,
         "usd_inr_rate": round(rate, 4),
         "source": source,

@@ -1,6 +1,7 @@
 import hashlib
 import json
 import math
+import os
 import random
 from datetime import datetime, timezone
 from typing import Optional
@@ -12,7 +13,7 @@ import pandas as pd
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
 BASE_PRICES = {"BTCUSDT": 64000.0, "ETHUSDT": 3100.0, "SOLUSDT": 145.0}
 DISPLAY_SYMBOLS = {"BTCUSDT": "BTC", "ETHUSDT": "ETH", "SOLUSDT": "SOL"}
-FALLBACK_USD_INR = 83.0
+FALLBACK_USD_INR = float(os.getenv("DELTA_USD_INR_RATE", "85"))
 
 
 def _seed(symbol: str, interval: str) -> int:
@@ -66,6 +67,8 @@ def live_price(symbol: str) -> Optional[float]:
 
 
 def usd_inr_rate() -> float:
+    if os.getenv("DELTA_FIXED_USD_INR", "true").lower() == "true":
+        return FALLBACK_USD_INR
     try:
         with urlopen("https://api.exchangerate.host/latest?base=USD&symbols=INR", timeout=2) as response:
             payload = json.loads(response.read().decode())

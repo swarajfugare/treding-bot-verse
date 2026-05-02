@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Dashboard from './pages/Dashboard.jsx'
 import DecisionPanel from './pages/DecisionPanel.jsx'
 import Settings from './pages/Settings.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { api } from './lib/api.js'
 
 const tabs = [
@@ -186,7 +187,9 @@ export default function App() {
           </div>
         )}
 
-        {activeView}
+        <ErrorBoundary>
+          {activeView}
+        </ErrorBoundary>
       </div>
     </main>
   )

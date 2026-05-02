@@ -27,13 +27,18 @@ export default function Dashboard({
   const trades = dashboard?.trades || []
   const scanner = dashboard?.scanner || []
   const balance = dashboard?.balance_detail || {}
+  const currentBalance = Number(balance.usdt_equivalent || 0)
+  const startingBalance = Number(balance.starting_balance ?? dashboard?.starting_balance ?? (status.mode === 'PAPER' ? 10000 : currentBalance))
+  const realPnl = currentBalance - startingBalance
+  const realPnlPercent = startingBalance > 0 ? (realPnl / startingBalance) * 100 : 0
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <StatCard icon={CircleDollarSign} label="INR Balance" value={money(balance.inr_balance, 'INR')} tone="amber" />
-        <StatCard icon={CircleDollarSign} label="USDT Equivalent" value={money(balance.usdt_equivalent)} tone="emerald" />
-        <StatCard icon={TrendingUp} label="Total PnL" value={money(dashboard?.pnl)} tone={Number(dashboard?.pnl) >= 0 ? 'cyan' : 'rose'} />
+        <StatCard icon={CircleDollarSign} label={status.mode === 'LIVE' ? 'USD Trading Balance' : 'USDT Equivalent'} value={money(balance.usdt_equivalent)} tone="emerald" />
+        <StatCard icon={CircleDollarSign} label="Starting Balance" value={money(startingBalance)} tone="cyan" />
+        <StatCard icon={TrendingUp} label="Real PnL" value={`${money(realPnl)} (${realPnlPercent.toFixed(2)}%)`} tone={realPnl >= 0 ? 'emerald' : 'rose'} />
         <StatCard icon={Activity} label="Bot Status" value={status.running ? 'Running' : 'Stopped'} tone={status.running ? 'emerald' : 'amber'} />
         <StatCard icon={TrendingUp} label="Best Coin" value={dashboard?.best_coin?.coin || 'Scanning'} tone="cyan" />
       </div>

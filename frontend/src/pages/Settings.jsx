@@ -7,6 +7,7 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
   const [credentials, setCredentials] = useState({ connected: false })
   const [form, setForm] = useState({ api_key: '', api_secret: '' })
   const [balanceForm, setBalanceForm] = useState({ usdt_balance: '', inr_balance: '' })
+  const [lossControl, setLossControl] = useState({ enabled: true, limit_pct: 2 })
   const [message, setMessage] = useState('')
   const [analysis, setAnalysis] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -16,8 +17,14 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
     setCredentials(data)
   }
 
+  async function loadLossControl() {
+    const data = await api.lossControl()
+    if (data.success) setLossControl({ enabled: data.enabled, limit_pct: data.limit_pct })
+  }
+
   useEffect(() => {
     loadCredentials()
+    loadLossControl()
   }, [])
 
   useEffect(() => {
@@ -54,7 +61,21 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
   async function testConnection() {
     setMessage('')
     const result = await api.testCredentials()
-    setMessage(result.success ? 'Connection format looks valid.' : result.error || 'Connection test failed.')
+    setMessage(result.success ? result.message || 'Connected' : result.message || result.error || 'Connection test failed.')
+    loadCredentials()
+  }
+
+  async function saveLossControl(event) {
+    event.preventDefault()
+    const result = await api.saveLossControl(lossControl)
+    setMessage(result.success ? 'Daily loss control saved.' : result.error || 'Could not save loss control.')
+    if (result.success) loadLossControl()
+  }
+
+  async function resetLoss() {
+    const result = await api.resetLoss()
+    setMessage(result.success ? result.message : result.error || 'Could not reset daily loss.')
+    if (result.success) onBalanceSaved()
   }
 
   async function uploadTradeData(event) {
@@ -75,7 +96,7 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
         <StatusPill active={Boolean(credentials.connected)} label={credentials.connected ? 'Connected' : 'Not Connected'} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid gap-6 xl:grid-cols-4">
         <div className="rounded-lg border border-slate-800 bg-slate-950 p-5">
           <h3 className="font-bold text-slate-50">Trading Mode</h3>
           <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-slate-900 p-1">
@@ -100,6 +121,7 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
                 className="focus-ring h-11 rounded-lg border border-slate-700 bg-slate-900 px-3 text-slate-100"
                 type="number"
                 step="0.01"
+                disabled={mode === 'LIVE'}
               />
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-300">
@@ -110,13 +132,15 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
                 className="focus-ring h-11 rounded-lg border border-slate-700 bg-slate-900 px-3 text-slate-100"
                 type="number"
                 step="0.01"
+                disabled={mode === 'LIVE'}
               />
             </label>
-            <button type="submit" className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 font-bold text-slate-950 hover:bg-cyan-400">
+            <button type="submit" disabled={mode === 'LIVE'} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 font-bold text-slate-950 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50">
               <Save size={18} />
               Save Balance
             </button>
           </form>
+          {mode === 'LIVE' && <p className="mt-3 text-xs text-slate-500">LIVE balances are read from Delta Exchange after API validation.</p>}
         </div>
 
         <form onSubmit={saveCredentials} className="rounded-lg border border-slate-800 bg-slate-950 p-5">
@@ -153,6 +177,36 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
           </div>
           {message && <p className="mt-4 rounded-lg bg-slate-900 p-3 text-sm font-medium text-slate-300">{message}</p>}
         </form>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950 p-5">
+          <h3 className="font-bold text-slate-50">Loss Control</h3>
+          <form onSubmit={saveLossControl} className="mt-4 grid gap-4">
+            <label className="flex items-center justify-between rounded-lg bg-slate-900 p-3 text-sm font-semibold text-slate-300">
+              Daily loss stop
+              <input
+                type="checkbox"
+                checked={Boolean(lossControl.enabled)}
+                onChange={(event) => setLossControl((current) => ({ ...current, enabled: event.target.checked }))}
+                className="h-5 w-5"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-300">
+              Loss limit %
+              <input
+                value={lossControl.limit_pct}
+                onChange={(event) => setLossControl((current) => ({ ...current, limit_pct: Number(event.target.value || 0) }))}
+                className="focus-ring h-11 rounded-lg border border-slate-700 bg-slate-900 px-3 text-slate-100"
+                type="number"
+                step="0.1"
+                min="0.1"
+              />
+            </label>
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" className="focus-ring h-11 rounded-lg bg-cyan-500 px-4 font-bold text-slate-950 hover:bg-cyan-400">Save</button>
+              <button type="button" onClick={resetLoss} className="focus-ring h-11 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 font-bold text-amber-200 hover:bg-amber-500/20">Reset Daily Loss</button>
+            </div>
+          </form>
+        </div>
 
         <div className="rounded-lg border border-slate-800 bg-slate-950 p-5">
           <h3 className="font-bold text-slate-50">Strategy Improvement</h3>

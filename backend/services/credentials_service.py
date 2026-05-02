@@ -79,7 +79,17 @@ def test_credentials(payload: dict) -> dict:
         api_key = saved["api_key"]
         api_secret = saved["api_secret"]
 
-    if len(api_key) < 6 or len(api_secret) < 6:
-        return {"success": False, "connected": False, "error": "Credentials are too short to be valid API credentials."}
+    if len(api_key.strip()) < 6 or len(api_secret.strip()) < 6:
+        return {"success": False, "connected": False, "message": "Credentials are too short.", "error": "Credentials are too short to be valid API credentials."}
 
-    return {"success": True, "connected": True, "error": None}
+    from backend.services.exchange_service import test_connection
+
+    result = test_connection()
+    if result.get("success"):
+        return {"success": True, "connected": True, "message": "Connected", "error": None}
+    return {
+        "success": False,
+        "connected": False,
+        "message": result.get("message") or result.get("error") or "Connection failed",
+        "error": result.get("error") or "Connection failed",
+    }

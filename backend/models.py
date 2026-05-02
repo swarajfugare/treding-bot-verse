@@ -34,3 +34,8 @@ class BalanceRequest(BaseModel):
     mode: str
     usdt_balance: Optional[float] = None
     inr_balance: Optional[float] = None
+
+
+class LossControlRequest(BaseModel):
+    enabled: bool
+    limit_pct: float
