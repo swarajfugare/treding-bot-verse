@@ -1,0 +1,7 @@
+cd "/Users/swarajfugare/Downloads/Code/Treding Bot/backend"
+source .venv/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+frontend 
+cd "/Users/swarajfugare/Downloads/Code/Treding Bot/frontend"
+npm run dev
