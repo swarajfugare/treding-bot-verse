@@ -10,6 +10,10 @@ from fastapi.exceptions import RequestValidationError
 
 sys.path.append(str(Path(__file__).resolve().parent))
 
+logging.basicConfig(level=logging.INFO)
+
+app = FastAPI()
+
 from database import init_db
 from routes import bot, dashboard, settings
 from services.bot_service import sync_bot_state_from_storage
@@ -20,8 +24,8 @@ print(f"PulseX Trader backend booting on PORT={PORT}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=["*"],  # change later to your Vercel URL
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -64,8 +68,12 @@ async def root() -> dict:
 
 
 @app.get("/api/health")
-async def health() -> dict:
+def health():
     return {"status": "ok"}
+
+@app.on_event("startup")
+async def startup_event():
+    logging.info("🚀 Backend started successfully")
 
 
 app.include_router(settings.router)
@@ -74,6 +82,6 @@ app.include_router(dashboard.router)
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("main:app", host="0.0.0.0", port=PORT)
+    port = int(os.environ.get("PORT", 8000))
+    logging.info(f"Starting server on port {port}")
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
