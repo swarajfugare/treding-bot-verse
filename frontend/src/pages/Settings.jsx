@@ -96,7 +96,7 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
         <StatusPill active={Boolean(credentials.connected)} label={credentials.connected ? 'Connected' : 'Not Connected'} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-4">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 2xl:grid-cols-4">
         <div className="rounded-lg border border-slate-800 bg-slate-950 p-5">
           <h3 className="font-bold text-slate-50">Trading Mode</h3>
           <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-slate-900 p-1">
@@ -165,12 +165,12 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
             </label>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button type="submit" disabled={saving} className="focus-ring inline-flex h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 font-semibold text-white hover:bg-emerald-500 disabled:opacity-60">
+          <div className="mt-5 grid gap-3 sm:flex sm:flex-wrap">
+            <button type="submit" disabled={saving} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 font-semibold text-white hover:bg-emerald-500 disabled:opacity-60">
               <Save size={18} />
               {saving ? 'Saving' : 'Save'}
             </button>
-            <button type="button" onClick={testConnection} className="focus-ring inline-flex h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 font-semibold text-slate-200 hover:bg-slate-800">
+            <button type="button" onClick={testConnection} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 font-semibold text-slate-200 hover:bg-slate-800">
               <PlugZap size={18} />
               Test
             </button>
@@ -201,7 +201,7 @@ export default function Settings({ mode, balance, onModeChange, onBalanceSaved }
                 min="0.1"
               />
             </label>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid gap-3 sm:flex sm:flex-wrap">
               <button type="submit" className="focus-ring h-11 rounded-lg bg-cyan-500 px-4 font-bold text-slate-950 hover:bg-cyan-400">Save</button>
               <button type="button" onClick={resetLoss} className="focus-ring h-11 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 font-bold text-amber-200 hover:bg-amber-500/20">Reset Daily Loss</button>
             </div>

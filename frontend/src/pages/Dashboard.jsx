@@ -22,6 +22,7 @@ export default function Dashboard({
   onControlBot,
   onExport,
 }) {
+  const isLoading = !dashboard
   const status = dashboard?.bot_status || {}
   const activeTrade = dashboard?.active_trade
   const trades = dashboard?.trades || []
@@ -34,7 +35,13 @@ export default function Dashboard({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-6">
+      {isLoading && (
+        <div className="panel rounded-lg p-5 text-sm font-semibold text-slate-300">
+          Loading dashboard data...
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard icon={CircleDollarSign} label="INR Balance" value={money(balance.inr_balance, 'INR')} tone="amber" />
         <StatCard icon={CircleDollarSign} label={status.mode === 'LIVE' ? 'USD Trading Balance' : 'USDT Equivalent'} value={money(balance.usdt_equivalent)} tone="emerald" />
         <StatCard icon={CircleDollarSign} label="Starting Balance" value={money(startingBalance)} tone="cyan" />
@@ -60,11 +67,11 @@ export default function Dashboard({
               BTC, ETH, and SOL are scored with EMA distance, RSI bands, multi-timeframe trend alignment, and volume filters.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:flex sm:flex-wrap xl:justify-end">
             <button
               type="button"
               onClick={() => onControlBot(status.running ? 'stop' : 'start')}
-              className={`focus-ring inline-flex h-11 items-center gap-2 rounded-lg px-4 font-semibold text-white ${
+              className={`focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 font-semibold text-white ${
                 status.running ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
               }`}
             >
@@ -74,7 +81,7 @@ export default function Dashboard({
             <button
               type="button"
               onClick={onExport}
-              className="focus-ring inline-flex h-11 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-4 font-semibold text-slate-200 hover:bg-slate-800"
+              className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-4 font-semibold text-slate-200 hover:bg-slate-800"
             >
               <Download size={18} />
               Export Trades
@@ -90,7 +97,11 @@ export default function Dashboard({
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {scanner.map((coin) => (
+          {scanner.length === 0 ? (
+            <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400 md:col-span-3">
+              Scanner data is loading.
+            </div>
+          ) : scanner.map((coin) => (
             <button
               type="button"
               key={coin.coin}
@@ -115,9 +126,9 @@ export default function Dashboard({
         <div className="panel rounded-lg p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-lg font-bold text-slate-50">{selectedCoin} Live Chart</h3>
-            <div className="flex gap-4 text-xs font-semibold text-slate-400">
-              <span className="text-cyan-300">EMA 9</span>
-              <span className="text-amber-300">EMA 21</span>
+            <div className="flex shrink-0 gap-4 text-xs font-semibold text-slate-400">
+              <span className="text-cyan-300">EMA 20</span>
+              <span className="text-amber-300">EMA 50</span>
             </div>
           </div>
           <TradingChart candles={chartCandles} trades={trades} symbol={selectedCoin} />
@@ -142,8 +153,8 @@ export default function Dashboard({
 
       <section className="panel rounded-lg p-5">
         <h3 className="text-lg font-bold text-slate-50">Recent {status.mode || 'PAPER'} Trades</h3>
-        <div className="mt-4 overflow-hidden rounded-lg border border-slate-800">
-          <table className="w-full text-left text-sm">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
+          <table className="min-w-[720px] w-full text-left text-sm">
             <thead className="bg-slate-950 text-slate-400">
               <tr>
                 <th className="px-3 py-2">Coin</th>

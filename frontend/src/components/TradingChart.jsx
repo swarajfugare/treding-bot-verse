@@ -17,7 +17,7 @@ export default function TradingChart({ candles = [], trades = [], symbol }) {
     if (!containerRef.current || candles.length === 0) return undefined
 
     const chart = createChart(containerRef.current, {
-      height: 360,
+      height: containerRef.current.clientHeight || 360,
       layout: { background: { color: '#0b1120' }, textColor: '#94a3b8' },
       grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
       rightPriceScale: { borderColor: '#334155' },
@@ -34,10 +34,10 @@ export default function TradingChart({ candles = [], trades = [], symbol }) {
     })
     candleSeries.setData(candles)
 
-    const ema9 = chart.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 2 })
-    ema9.setData(ema(candles, 9))
-    const ema21 = chart.addSeries(LineSeries, { color: '#f59e0b', lineWidth: 2 })
-    ema21.setData(ema(candles, 21))
+    const ema20 = chart.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 2 })
+    ema20.setData(ema(candles, 20))
+    const ema50 = chart.addSeries(LineSeries, { color: '#f59e0b', lineWidth: 2 })
+    ema50.setData(ema(candles, 50))
 
     const markers = trades
       .filter((trade) => trade.symbol === symbol)
@@ -64,5 +64,5 @@ export default function TradingChart({ candles = [], trades = [], symbol }) {
     }
   }, [candles, trades, symbol])
 
-  return <div ref={containerRef} className="h-[360px] w-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950" />
+  return <div ref={containerRef} className="h-[300px] w-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950 sm:h-[360px]" />
 }

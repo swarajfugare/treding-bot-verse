@@ -134,32 +134,32 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#164e63_0%,#020617_34%,#020617_100%)] text-slate-100">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
-        <header className="panel flex flex-col gap-4 rounded-lg p-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 py-4 sm:gap-6 sm:px-6 lg:px-8">
+        <header className="panel flex flex-col gap-4 rounded-lg p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="grid h-12 w-12 place-items-center rounded-lg bg-cyan-400 text-slate-950">
               <Bot size={26} aria-hidden="true" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-2xl font-black text-slate-50">PulseX Trader</h1>
               <p className="text-sm font-medium text-slate-400">Professional multi-mode scanner and trade console</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="grid grid-cols-2 rounded-lg bg-slate-950 p-1">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:items-center lg:justify-end">
+            <div className="grid grid-cols-2 rounded-lg bg-slate-950 p-1 sm:w-auto">
               {['PAPER', 'LIVE'].map((item) => (
                 <button
                   type="button"
                   key={item}
                   onClick={() => handleModeChange(item)}
-                  className={`h-10 rounded-md px-4 text-sm font-black ${mode === item ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`}
+                  className={`h-11 rounded-md px-4 text-sm font-black ${mode === item ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:bg-slate-800'}`}
                 >
                   {item}
                 </button>
               ))}
             </div>
-            <nav className="flex flex-wrap gap-2">
+            <nav className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 const active = activeTab === tab.id
@@ -168,12 +168,12 @@ export default function App() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`focus-ring inline-flex h-10 items-center gap-2 rounded-lg px-3 font-semibold ${
+                    className={`focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-2 rounded-lg px-3 font-semibold ${
                       active ? 'bg-slate-100 text-slate-950' : 'bg-slate-950 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
-                    <Icon size={18} />
-                    {tab.label}
+                    <Icon size={18} className="shrink-0" />
+                    <span className="truncate">{tab.label}</span>
                   </button>
                 )
               })}

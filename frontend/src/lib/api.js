@@ -1,11 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 async function request(path, options = {}) {
   try {
     if (!API_URL) {
       throw new Error('VITE_API_URL is not configured.')
     }
-    const response = await fetch(`${API_URL}${path}`, {
+    const endpoint = path.startsWith('/') ? path : `/${path}`
+    const response = await fetch(`${API_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(options.headers || {}),
