@@ -1,28 +1,26 @@
+import os
 import sys
 from pathlib import Path
 
-from fastapi import Body, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parent))
 
-from backend.database import init_db
-from backend.routes import bot, dashboard, settings
-from backend.services.bot_service import sync_bot_state_from_storage
+from database import init_db
+from routes import bot, dashboard, settings
+from services.bot_service import sync_bot_state_from_storage
 
 app = FastAPI(title="PulseX Trader API", version="1.0.0")
+PORT = int(os.environ.get("PORT", 8000))
+print(f"PulseX Trader backend booting on PORT={PORT}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://10.54.50.228:5173",
-        "*",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -30,8 +28,13 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup() -> None:
-    init_db()
-    sync_bot_state_from_storage()
+    print("PulseX Trader startup: initializing database")
+    try:
+        init_db()
+        sync_bot_state_from_storage()
+        print("PulseX Trader startup: ready")
+    except Exception as exc:
+        print(f"PulseX Trader startup handled error: {exc}")
 
 
 @app.exception_handler(Exception)
@@ -58,9 +61,15 @@ async def root() -> dict:
 
 @app.get("/api/health")
 async def health() -> dict:
-    return {"success": True, "status": "healthy", "error": None}
+    return {"status": "ok"}
 
 
 app.include_router(settings.router)
 app.include_router(bot.router)
 app.include_router(dashboard.router)
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=PORT)

@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from backend.database import (
+from database import (
     DB_LOCK,
     dict_row,
     get_connection,
@@ -14,10 +14,10 @@ from backend.database import (
     set_current_mode,
     set_setting,
 )
-from backend.services.balance_service import adjust_paper_usdt, get_balance
-from backend.services.exchange_service import fetch_open_orders, fetch_open_positions, place_market_order
-from backend.services.market_service import latest_price
-from backend.services.strategy_service import MIN_CONFIDENCE, evaluate_market, scan_market
+from services.balance_service import adjust_paper_usdt, get_balance
+from services.exchange_service import fetch_open_orders, fetch_open_positions, place_market_order
+from services.market_service import latest_price
+from services.strategy_service import MIN_CONFIDENCE, evaluate_market, scan_market
 
 
 class BotManager:
@@ -299,8 +299,8 @@ def open_trade_from_decision(decision: dict, mode: Optional[str] = None) -> Opti
     price = latest_price(decision["coin"])
     quantity = allocated / price
     side = decision["signal"]
-    stop_loss = price * (0.995 if side == "BUY" else 1.005)
-    take_profit = price * (1.01 if side == "BUY" else 0.99)
+    stop_loss = float(decision.get("stop_loss") or price * (0.985 if side == "BUY" else 1.015))
+    take_profit = float(decision.get("take_profit") or price * (1.03 if side == "BUY" else 0.97))
     timestamp = now_iso()
 
     if normalized_mode == "LIVE":

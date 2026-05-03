@@ -1,8 +1,8 @@
 from typing import Optional
 
-from backend.database import DB_LOCK, get_connection, normalize_mode, now_iso
-from backend.services.exchange_service import fetch_live_account
-from backend.services.market_service import usd_inr_rate
+from database import DB_LOCK, get_connection, normalize_mode, now_iso
+from services.exchange_service import fetch_live_account
+from services.market_service import usd_inr_rate
 
 
 def _stored_balance(mode: str) -> dict:

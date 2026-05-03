@@ -2,16 +2,17 @@ from typing import Optional
 
 from fastapi import APIRouter, Body
 
-from backend.models import BotControlRequest
-from backend.services.bot_service import bot_manager
-from backend.services.strategy_service import evaluate_market
+from models import BotControlRequest
+from services.bot_service import bot_manager
+from services.strategy_service import evaluate_market
 
 router = APIRouter(prefix="/api/bot", tags=["bot"])
 
 
 @router.post("")
-async def control_bot(payload: BotControlRequest = Body(default_factory=BotControlRequest)) -> dict:
+async def control_bot(payload: Optional[BotControlRequest] = Body(None)) -> dict:
     try:
+        payload = payload or BotControlRequest()
         action = (payload.action or "").lower()
         if payload.running is True or action == "start":
             return await bot_manager.start(payload.paper_trading, payload.mode)

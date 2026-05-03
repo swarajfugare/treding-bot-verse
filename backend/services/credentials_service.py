@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
-from backend.database import DB_LOCK, dict_row, get_connection, now_iso
-from backend.utils.crypto import decrypt_value, encrypt_value, mask_value
+from database import DB_LOCK, dict_row, get_connection, now_iso
+from utils.crypto import decrypt_value, encrypt_value, mask_value
 
 
 def normalize_credentials(payload: dict) -> Tuple[Optional[str], Optional[str], Optional[str]]:
@@ -82,7 +82,7 @@ def test_credentials(payload: dict) -> dict:
     if len(api_key.strip()) < 6 or len(api_secret.strip()) < 6:
         return {"success": False, "connected": False, "message": "Credentials are too short.", "error": "Credentials are too short to be valid API credentials."}
 
-    from backend.services.exchange_service import test_connection
+    from services.exchange_service import test_connection
 
     result = test_connection()
     if result.get("success"):

@@ -2,11 +2,11 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Body
 
-from backend.models import BalanceRequest, LossControlRequest, ModeRequest, PaperModeRequest
-from backend.services.balance_service import get_balance, set_balance
-from backend.services.bot_service import set_paper_trading, set_trading_mode
-from backend.services.credentials_service import get_credentials, normalize_credentials, save_credentials, test_credentials
-from backend.services.risk_service import get_loss_control, reset_daily_loss, set_loss_control
+from models import BalanceRequest, LossControlRequest, ModeRequest, PaperModeRequest
+from services.balance_service import get_balance, set_balance
+from services.bot_service import set_paper_trading, set_trading_mode
+from services.credentials_service import get_credentials, normalize_credentials, save_credentials, test_credentials
+from services.risk_service import get_loss_control, reset_daily_loss, set_loss_control
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -20,7 +20,7 @@ async def read_credentials() -> dict:
 
 
 @router.post("/credentials")
-async def write_credentials(payload: dict[str, Any] = Body(default_factory=dict)) -> dict:
+async def write_credentials(payload: Optional[dict[str, Any]] = Body(None)) -> dict:
     try:
         api_key, api_secret, error = normalize_credentials(payload or {})
         if error:
@@ -31,7 +31,7 @@ async def write_credentials(payload: dict[str, Any] = Body(default_factory=dict)
 
 
 @router.post("/credentials/test")
-async def check_credentials(payload: dict[str, Any] = Body(default_factory=dict)) -> dict:
+async def check_credentials(payload: Optional[dict[str, Any]] = Body(None)) -> dict:
     try:
         return test_credentials(payload or {})
     except Exception as exc:
@@ -57,7 +57,7 @@ async def update_mode(payload: ModeRequest) -> dict:
 @router.get("/mode")
 async def read_mode() -> dict:
     try:
-        from backend.database import get_current_mode
+        from database import get_current_mode
 
         return {"success": True, "mode": get_current_mode(), "error": None}
     except Exception as exc:

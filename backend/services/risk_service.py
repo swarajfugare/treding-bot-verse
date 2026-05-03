@@ -1,4 +1,4 @@
-from backend.database import get_setting, now_iso, set_setting
+from database import get_setting, now_iso, set_setting
 
 
 def get_loss_control() -> dict:

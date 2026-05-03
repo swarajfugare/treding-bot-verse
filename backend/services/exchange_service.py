@@ -8,8 +8,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from backend.services.credentials_service import get_credentials
-from backend.services.market_service import usd_inr_rate
+from services.credentials_service import get_credentials
+from services.market_service import usd_inr_rate
 
 DELTA_API_URL = os.getenv("DELTA_API_URL", "https://api.india.delta.exchange").rstrip("/")
 DELTA_SYMBOLS = {"BTCUSDT": "BTCUSD", "ETHUSDT": "ETHUSD", "SOLUSDT": "SOLUSD"}

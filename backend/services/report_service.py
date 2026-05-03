@@ -3,7 +3,7 @@ import io
 import json
 from typing import Optional
 
-from backend.database import DB_LOCK, get_connection, normalize_mode
+from database import DB_LOCK, get_connection, normalize_mode
 
 
 EXPORT_FIELDS = ["coin", "entry", "exit", "pnl", "confidence", "reason"]

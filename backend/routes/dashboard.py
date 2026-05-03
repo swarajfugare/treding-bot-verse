@@ -3,11 +3,11 @@ from typing import Optional
 from fastapi import APIRouter, Body
 from fastapi.responses import Response
 
-from backend.database import DB_LOCK, get_connection
-from backend.services.bot_service import dashboard
-from backend.services.market_service import chart_candles
-from backend.services.report_service import analyze_uploaded_trades, export_trades_csv
-from backend.services.strategy_service import scan_market
+from database import DB_LOCK, get_connection
+from services.bot_service import dashboard
+from services.market_service import chart_candles
+from services.report_service import analyze_uploaded_trades, export_trades_csv
+from services.strategy_service import scan_market
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
 
@@ -23,7 +23,7 @@ async def read_dashboard(mode: Optional[str] = None) -> dict:
 @router.get("/trades")
 async def read_trades(mode: Optional[str] = None) -> dict:
     try:
-        from backend.database import normalize_mode
+        from database import normalize_mode
 
         normalized_mode = normalize_mode(mode)
         with DB_LOCK, get_connection() as conn:
@@ -56,7 +56,7 @@ async def read_chart(symbol: str) -> dict:
 @router.get("/trades/export")
 async def export_trades(mode: Optional[str] = None, format: str = "csv"):
     try:
-        from backend.database import normalize_mode
+        from database import normalize_mode
 
         normalized_mode = normalize_mode(mode)
         csv_text = export_trades_csv(mode)
@@ -77,8 +77,9 @@ async def export_trades(mode: Optional[str] = None, format: str = "csv"):
 
 
 @router.post("/strategy/analyze")
-async def analyze_strategy_upload(payload: dict = Body(default_factory=dict)) -> dict:
+async def analyze_strategy_upload(payload: Optional[dict] = Body(None)) -> dict:
     try:
+        payload = payload or {}
         filename = str(payload.get("filename") or "trades.csv")
         content = str(payload.get("content") or "")
         return analyze_uploaded_trades(filename, content)
