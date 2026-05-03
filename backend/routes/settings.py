@@ -7,6 +7,7 @@ from services.balance_service import get_balance, set_balance
 from services.bot_service import set_paper_trading, set_trading_mode
 from services.credentials_service import get_credentials, normalize_credentials, save_credentials, test_credentials
 from services.risk_service import get_loss_control, reset_daily_loss, set_loss_control
+from utils.async_tools import run_blocking
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -33,7 +34,9 @@ async def write_credentials(payload: Optional[dict[str, Any]] = Body(None)) -> d
 @router.post("/credentials/test")
 async def check_credentials(payload: Optional[dict[str, Any]] = Body(None)) -> dict:
     try:
-        return test_credentials(payload or {})
+        return await run_blocking(test_credentials, payload or {}, timeout=6)
+    except TimeoutError:
+        return {"success": False, "connected": False, "error": "Connection test timed out safely."}
     except Exception as exc:
         return {"success": False, "connected": False, "error": str(exc)}
 
@@ -67,10 +70,12 @@ async def read_mode() -> dict:
 @router.get("/balance")
 async def read_balance(mode: Optional[str] = None) -> dict:
     try:
-        balance = get_balance(mode)
+        balance = await run_blocking(get_balance, mode, timeout=2)
         if balance.get("error"):
             return {"success": False, "balance": balance, "error": balance["error"]}
         return {"success": True, "balance": balance, "error": None}
+    except TimeoutError:
+        return {"success": False, "error": "Balance request timed out safely."}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
 

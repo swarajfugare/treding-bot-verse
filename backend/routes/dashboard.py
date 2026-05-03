@@ -8,6 +8,7 @@ from services.bot_service import dashboard
 from services.market_service import chart_candles
 from services.report_service import analyze_uploaded_trades, export_trades_csv
 from services.strategy_service import scan_market
+from utils.async_tools import run_blocking
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
 
@@ -15,7 +16,9 @@ router = APIRouter(prefix="/api", tags=["dashboard"])
 @router.get("/dashboard")
 async def read_dashboard(mode: Optional[str] = None) -> dict:
     try:
-        return dashboard(mode)
+        return await run_blocking(dashboard, mode, timeout=2)
+    except TimeoutError:
+        return {"success": False, "error": "Dashboard request timed out safely. Try again in a moment."}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
 
@@ -39,8 +42,10 @@ async def read_trades(mode: Optional[str] = None) -> dict:
 @router.get("/market/scanner")
 async def read_scanner() -> dict:
     try:
-        scan = scan_market()
+        scan = await run_blocking(scan_market, timeout=2)
         return {"success": True, **scan, "error": None}
+    except TimeoutError:
+        return {"success": False, "coins": [], "best": None, "error": "Scanner request timed out safely."}
     except Exception as exc:
         return {"success": False, "coins": [], "best": None, "error": str(exc)}
 
@@ -48,7 +53,10 @@ async def read_scanner() -> dict:
 @router.get("/market/chart/{symbol}")
 async def read_chart(symbol: str) -> dict:
     try:
-        return {"success": True, "symbol": symbol.upper(), "candles": chart_candles(symbol.upper()), "error": None}
+        candles = await run_blocking(chart_candles, symbol.upper(), timeout=2)
+        return {"success": True, "symbol": symbol.upper(), "candles": candles, "error": None}
+    except TimeoutError:
+        return {"success": False, "symbol": symbol.upper(), "candles": [], "error": "Chart request timed out safely."}
     except Exception as exc:
         return {"success": False, "symbol": symbol.upper(), "candles": [], "error": str(exc)}
 
@@ -59,7 +67,7 @@ async def export_trades(mode: Optional[str] = None, format: str = "csv"):
         from database import normalize_mode
 
         normalized_mode = normalize_mode(mode)
-        csv_text = export_trades_csv(mode)
+        csv_text = await run_blocking(export_trades_csv, mode, timeout=2)
         if format.lower() == "json":
             with DB_LOCK, get_connection() as conn:
                 rows = conn.execute(
@@ -82,6 +90,6 @@ async def analyze_strategy_upload(payload: Optional[dict] = Body(None)) -> dict:
         payload = payload or {}
         filename = str(payload.get("filename") or "trades.csv")
         content = str(payload.get("content") or "")
-        return analyze_uploaded_trades(filename, content)
+        return await run_blocking(analyze_uploaded_trades, filename, content, timeout=2)
     except Exception as exc:
         return {"success": False, "error": str(exc), "suggestions": []}

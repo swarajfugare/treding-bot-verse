@@ -1,21 +1,25 @@
 from typing import Optional
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, BackgroundTasks, Body
 
 from models import BotControlRequest
 from services.bot_service import bot_manager
 from services.strategy_service import evaluate_market
+from utils.async_tools import run_blocking
 
 router = APIRouter(prefix="/api/bot", tags=["bot"])
 
 
 @router.post("")
-async def control_bot(payload: Optional[BotControlRequest] = Body(None)) -> dict:
+async def control_bot(background_tasks: BackgroundTasks, payload: Optional[BotControlRequest] = Body(None)) -> dict:
     try:
         payload = payload or BotControlRequest()
         action = (payload.action or "").lower()
         if payload.running is True or action == "start":
-            return await bot_manager.start(payload.paper_trading, payload.mode)
+            result = await bot_manager.start(payload.paper_trading, payload.mode)
+            if result.get("success"):
+                background_tasks.add_task(bot_manager.ensure_loop)
+            return result
         if payload.running is False or action == "stop":
             return await bot_manager.stop()
         return {"success": False, "running": bot_manager.running, "error": "Use action=start, action=stop, running=true, or running=false."}
@@ -34,7 +38,7 @@ async def bot_status() -> dict:
 @router.get("/decision")
 async def bot_decision(mode: Optional[str] = None) -> dict:
     try:
-        decision = evaluate_market(mode)
+        decision = await run_blocking(evaluate_market, mode, timeout=2)
         return {"success": True, **decision, "error": None}
     except Exception as exc:
         return {

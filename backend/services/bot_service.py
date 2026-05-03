@@ -46,7 +46,6 @@ class BotManager:
                 bot_state["running"] = True
                 bot_state["active_trade"] = open_trade
                 bot_state["trades_today"] = len(todays_closed_trades(active_mode))
-                self.task = asyncio.create_task(self._loop())
                 if open_trade:
                     log_event(f"Bot started and resumed open {open_trade['symbol']} trade.", mode=active_mode)
                     status = "resumed_trade"
@@ -54,8 +53,7 @@ class BotManager:
                 else:
                     log_event("Bot started.", mode=active_mode)
                     status = "started"
-                    first_tick = await self.tick()
-                    open_trade = get_open_trade(active_mode)
+                    first_tick = None
                 bot_state["active_trade"] = open_trade
                 return {
                     "success": True,
@@ -70,6 +68,15 @@ class BotManager:
         except Exception as exc:
             log_event(f"Bot start failed: {exc}", "error", mode=get_current_mode())
             return {"success": False, "running": self.running, "error": str(exc)}
+
+    async def ensure_loop(self) -> None:
+        try:
+            async with self.lock:
+                if self.running and (self.task is None or self.task.done()):
+                    print("PulseX Trader bot loop scheduled")
+                    self.task = asyncio.create_task(self._loop())
+        except Exception as exc:
+            log_event(f"Bot loop scheduling failed: {exc}", "error", mode=get_current_mode())
 
     async def stop(self) -> dict:
         try:
@@ -99,6 +106,9 @@ class BotManager:
             await asyncio.sleep(3)
 
     async def tick(self) -> dict:
+        return await asyncio.wait_for(asyncio.to_thread(self._tick_sync), timeout=12)
+
+    def _tick_sync(self) -> dict:
         mode = get_current_mode()
         active_trade = get_open_trade(mode)
         bot_state["mode"] = mode

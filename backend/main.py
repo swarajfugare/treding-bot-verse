@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -49,9 +50,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.middleware("http")
 async def debug_request_logging(request: Request, call_next):
-    print("Request received")
-    print(f"{request.method} {request.url.path}")
-    return await call_next(request)
+    start = time.perf_counter()
+    print(f"Request received: {request.method} {request.url.path}")
+    response = await call_next(request)
+    duration_ms = round((time.perf_counter() - start) * 1000, 2)
+    print(f"Request completed: {request.method} {request.url.path} {response.status_code} {duration_ms}ms")
+    return response
 
 
 @app.get("/")

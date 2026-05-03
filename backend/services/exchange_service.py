@@ -55,7 +55,7 @@ def _request(method: str, path: str, params: Optional[dict] = None, body: Option
             "User-Agent": "python-rest-client",
         }
         request = Request(url, data=data, headers=headers, method=method.upper())
-        with urlopen(request, timeout=8) as response:
+        with urlopen(request, timeout=5) as response:
             payload = json.loads(response.read().decode())
             if payload.get("success") is False:
                 return {"success": False, "error": payload.get("error") or payload.get("message") or "Delta API request failed", "data": payload}
